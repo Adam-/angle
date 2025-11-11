@@ -2,12 +2,11 @@ name: Build ANGLE (macOS)
 
 on:
   push:
-  pull_request:
   workflow_dispatch:
 
 jobs:
   build-angle:
-    runs-on: macos-14  # macOS with Xcode 15 and arm64 builders
+    runs-on: macos-latest
 
     steps:
       - name: Clone depot_tools
@@ -21,21 +20,27 @@ jobs:
           cd angle
           fetch angle
 
-      - name: Checkout ANGLE revision (optional)
+      - name: Checkout ANGLE revision
         working-directory: angle
         run: |
           git checkout bb55ea10fcef3759e4db7ef8a473a9ceac2c6aa6
           gclient sync
 
-      - name: Generate build files (Release, Metal backend)
+      - name: Generate build files
         working-directory: angle
         run: |
           gn gen out/Release --args='
             is_debug=false
             is_clang=true
-            target_cpu="arm64"
+            angle_enable_d3d9=false
+            angle_enable_d3d11=false
+            angle_enable_null=false
+            angle_enable_vulkan=false
+            angle_enable_essl=false
+            angle_enable_gl=true
             angle_enable_metal=true
-            angle_enable_gl=false
+            angle_enable_glsl=true
+            angle_build_all=false
           '
 
       - name: Build ANGLE
