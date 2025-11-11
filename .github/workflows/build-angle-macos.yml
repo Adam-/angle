@@ -54,7 +54,7 @@ jobs:
         working-directory: angle
         run: autoninja -C out/Release libEGL libGLESv2
 
-      - name: Upload ANGLE macOS dylibs
+      - name: Upload ANGLE artifacts
         uses: actions/upload-artifact@v4
         with:
           name: angle-macos-${{ matrix.macos-version }}
