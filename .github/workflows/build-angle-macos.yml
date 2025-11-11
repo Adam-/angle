@@ -1,12 +1,18 @@
-name: Build ANGLE (macOS)
+name: Build ANGLE
 
 on:
-  push:
   workflow_dispatch:
+
+env:
+  ANGLE_VERSION: "ee071b31d1c7a55ccc2416ae55626b45be0e3ac5"
 
 jobs:
   build-angle:
-    runs-on: macos-latest
+    runs-on: ${{ matrix.macos-version }}
+
+    strategy:
+      matrix:
+        macos-version: [ "macos-15", "macos-15-intel" ]
 
     steps:
       - name: Clone depot_tools
@@ -23,7 +29,7 @@ jobs:
       - name: Checkout ANGLE revision
         working-directory: angle
         run: |
-          git checkout bb55ea10fcef3759e4db7ef8a473a9ceac2c6aa6
+          git checkout ${{ env.ANGLE_VERSION }}
           gclient sync
 
       - name: Generate build files
@@ -41,16 +47,16 @@ jobs:
             angle_enable_metal=true
             angle_enable_glsl=true
             angle_build_all=false
+            mac_deployment_target="11.0"
           '
 
       - name: Build ANGLE
         working-directory: angle
-        run: ninja -C out/Release libEGL libGLESv2
+        run: autoninja -C out/Release libEGL libGLESv2
 
       - name: Upload ANGLE macOS dylibs
         uses: actions/upload-artifact@v4
         with:
-          name: angle-macos-libs
+          name: angle-macos-${{ matrix.macos-version }}
           path: |
-            angle/out/Release/libEGL.dylib
-            angle/out/Release/libGLESv2.dylib
+            angle/out/Release/
