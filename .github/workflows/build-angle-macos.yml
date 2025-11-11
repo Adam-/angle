@@ -1,6 +1,7 @@
 name: Build ANGLE (macOS)
 
 on:
+  push:
   workflow_dispatch:
 
 jobs:
@@ -10,8 +11,8 @@ jobs:
     steps:
       - name: Checkout ANGLE source
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
+        #with:
+        #  submodules: recursive
 
       # You must provide depot_tools in the repo or submodule, or point to installed tools
       - name: Add depot_tools to PATH
