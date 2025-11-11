@@ -1,0 +1,52 @@
+name: Build ANGLE (macOS)
+
+on:
+  workflow_dispatch:
+
+jobs:
+  build:
+    runs-on: macos-14  # arm64 runner with Xcode 15
+
+    steps:
+      - name: Checkout ANGLE source
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # You must provide depot_tools in the repo or submodule, or point to installed tools
+      - name: Add depot_tools to PATH
+        run: |
+          echo "$PWD/third_party/depot_tools" >> $GITHUB_PATH
+
+      # Ensure gclient works
+      - name: Sync
+        run: gclient sync
+
+      - name: Generate build (Metal backend)
+        run: |
+          gn gen out/Release --args='
+            is_debug=false
+            is_clang=true
+            target_cpu="arm64"
+            angle_enable_d3d9=false
+            angle_enable_d3d11=false
+            angle_enable_null=false
+            angle_enable_vulkan=false
+            angle_enable_essl=false
+            angle_enable_gl=true
+            angle_enable_metal=true
+            angle_enable_glsl=true
+            angle_build_all=false
+          '
+
+      - name: Build
+        run: |
+          ninja -C out/Release libEGL libGLESv2
+
+      - name: Upload dylibs
+        uses: actions/upload-artifact@v4
+        with:
+          name: angle-macos
+          path: |
+            out/Release/libEGL.dylib
+            out/Release/libGLESv2.dylib
