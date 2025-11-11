@@ -1,0 +1,51 @@
+name: Build ANGLE (macOS)
+
+on:
+  push:
+  pull_request:
+  workflow_dispatch:
+
+jobs:
+  build-angle:
+    runs-on: macos-14  # macOS with Xcode 15 and arm64 builders
+
+    steps:
+      - name: Clone depot_tools
+        run: |
+          git clone https://chromium.googlesource.com/chromium/tools/depot_tools.git
+          echo "$PWD/depot_tools" >> $GITHUB_PATH
+
+      - name: Fetch ANGLE source
+        run: |
+          mkdir angle
+          cd angle
+          fetch angle
+
+      - name: Checkout ANGLE revision (optional)
+        working-directory: angle
+        run: |
+          git checkout bb55ea10fcef3759e4db7ef8a473a9ceac2c6aa6
+          gclient sync
+
+      - name: Generate build files (Release, Metal backend)
+        working-directory: angle
+        run: |
+          gn gen out/Release --args='
+            is_debug=false
+            is_clang=true
+            target_cpu="arm64"
+            angle_enable_metal=true
+            angle_enable_gl=false
+          '
+
+      - name: Build ANGLE
+        working-directory: angle
+        run: ninja -C out/Release libEGL libGLESv2
+
+      - name: Upload ANGLE macOS dylibs
+        uses: actions/upload-artifact@v4
+        with:
+          name: angle-macos-libs
+          path: |
+            angle/out/Release/libEGL.dylib
+            angle/out/Release/libGLESv2.dylib
